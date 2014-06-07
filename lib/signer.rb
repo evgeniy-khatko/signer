@@ -37,7 +37,8 @@ class Signer
     unless node
       node = Nokogiri::XML::Node.new('Signature', document)
       node.default_namespace = 'http://www.w3.org/2000/09/xmldsig#'
-      security_node.add_child(node)
+      #security_node.add_child(node)
+      security_node.first_element_child.add_previous_sibling(node)
     end
     node
   end
