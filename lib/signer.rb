@@ -37,7 +37,6 @@ class Signer
     unless node
       node = Nokogiri::XML::Node.new('Signature', document)
       node.default_namespace = 'http://www.w3.org/2000/09/xmldsig#'
-      #security_node.add_child(node)
       security_node.first_element_child.add_previous_sibling(node)
     end
     node
@@ -96,15 +95,16 @@ class Signer
     node
   end
 
-  # <KeyInfo>
-  #   <X509Data>
-  #     <X509IssuerSerial>
-  #       <X509IssuerName>System.Security.Cryptography.X509Certificates.X500DistinguishedName</X509IssuerName>
-  #       <X509SerialNumber>13070789</X509SerialNumber>
-  #     </X509IssuerSerial>
-  #     <X509Certificate>MIID+jCCAuKgAwIBAgIEAMdxxTANBgkqhkiG9w0BAQUFADBsMQswCQYDVQQGEwJTRTEeMBwGA1UEChMVTm9yZGVhIEJhbmsgQUIgKHB1YmwpMScwJQYDVQQDEx5Ob3JkZWEgcm9sZS1jZXJ0aWZpY2F0ZXMgQ0EgMDExFDASBgNVBAUTCzUxNjQwNi0wMTIwMB4XDTA5MDYxMTEyNTAxOVoXDTExMDYxMTEyNTAxOVowcjELMAkGA1UEBhMCU0UxIDAeBgNVBAMMF05vcmRlYSBEZW1vIENlcnRpZmljYXRlMRQwEgYDVQQEDAtDZXJ0aWZpY2F0ZTEUMBIGA1UEKgwLTm9yZGVhIERlbW8xFTATBgNVBAUTDDAwOTU1NzI0Mzc3MjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAwcgz5AzbxTbsCE51No7fPnSqmQBIMW9OiPkiHotwYQTl+H9qwDvQRyBqHN26tnw7hNvEShd1ZRGUg4drMEXDV5CmKqsAevs9lauWDaHnGKPNHZJ1hNNYXHwymksEz5zMnG8eqRdhb4vOV2FzreJeYpsgx31Bv0aTofHcHVz4uGcCAwEAAaOCASAwggEcMAkGA1UdEwQCMAAwEQYDVR0OBAoECEj6Y9/vU03WMBMGA1UdIAQMMAowCAYGKoVwRwEDMBMGA1UdIwQMMAqACEIFjfLBeTpRMDcGCCsGAQUFBwEBBCswKTAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Aubm9yZGVhLnNlL1JDQTAxMA4GA1UdDwEB/wQEAwIGQDCBiAYDVR0fBIGAMH4wfKB6oHiGdmxkYXA6Ly9sZGFwLm5iLnNlL2NuPU5vcmRlYSUyMHJvbGUtY2VydGlmaWNhdGVzJTIwQ0ElMjAwMSxvPU5vcmRlYSUyMEJhbmslMjBBQiUyMChwdWJsKSxjPVNFP2NlcnRpZmljYXRlcmV2b2NhdGlvbmxpc3QwDQYJKoZIhvcNAQEFBQADggEBAEXUv87VpHk51y3TqkMb1MYDqeKvQRE1cNcvhEJhIzdDpXMA9fG0KqvSTT1e0ZI2r78mXDvtTZnpic44jX2XMSmKO6n+1taAXq940tJUhF4arYMUxwDKOso0Doanogug496gipqMlpLgvIhGt06sWjNrvHzp2eGydUFdCsLr2ULqbDcut7g6eMcmrsnrOntjEU/J3hO8gyCeldJ+fI81qarrK/I0MZLR5LWCyVG/SKduoxHLX7JohsbIGyK1qAh9fi8l6X1Rcu80v5inpu71E/DnjbkAZBo7vsj78zzdk7KNliBIqBcIszdJ3dEHRWSI7FspRxyiR0NDm4lpyLwFtfw=</X509Certificate>
-  #   </X509Data>
-  # </KeyInfo>
+  # <ds:KeyInfo Id="KeyId-363DE641F62F9F5FF31402068320382449">
+  #   <wsse:SecurityTokenReference wsu:Id="STRId-363DE641F62F9F5FF31402068320382450" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+  #     <ds:X509Data>
+  #       <ds:X509IssuerSerial>
+  #         <ds:X509IssuerName>CN=Google Internet Authority G2,O=Google Inc,C=US</ds:X509IssuerName>
+  #         <ds:X509SerialNumber>1387084050634530550</ds:X509SerialNumber>
+  #       </ds:X509IssuerSerial>
+  #     </ds:X509Data>
+  #   </wsse:SecurityTokenReference>
+  # </ds:KeyInfo>
   def x509_data_node
     issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
     issuer_name_node.content = "System.Security.Cryptography.X509Certificates.X500DistinguishedName"
@@ -116,15 +116,17 @@ class Signer
     issuer_serial_node.add_child(issuer_name_node)
     issuer_serial_node.add_child(issuer_number_node)
 
-    cetificate_node    = Nokogiri::XML::Node.new('X509Certificate', document)
-    cetificate_node.content = Base64.encode64(cert.to_der).gsub("\n", '')
-
     data_node          = Nokogiri::XML::Node.new('X509Data', document)
     data_node.add_child(issuer_serial_node)
-    data_node.add_child(cetificate_node)
+
+    security_token_reference_node = Nokogiri::XML::Node.new('o:SecurityTokenReference', document)
+    security_token_reference_node["u:Id"] = "STRId-#{rand 1000000}"
+    security_token_reference_node.add_child(data_node)
+
 
     key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
-    key_info_node.add_child(data_node)
+    key_info_node["Id"] = "KeyId-#{rand 100000000}"
+    key_info_node.add_child(security_token_reference_node)
 
     signed_info_node.add_next_sibling(key_info_node)
 
@@ -146,6 +148,18 @@ class Signer
       wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
+    #what_to_sign = nil
+    #if options['only_sign_entire_headers_and_body']
+    #  # need to find entire header or body to sign
+    #  tmpnode = target_node
+    #  while tmpnode.name.downcase != 'header' and tmpnode.name.downcase != 'body'
+    #    tmpnode = tmpnode.parent
+    #  end
+    #  what_to_sign = tmpnode
+    #else
+    #  what_to_sign = target_node
+    #end
+
     target_canon = canonicalize(target_node)
     target_digest = Base64.encode64(OpenSSL::Digest::SHA1.digest(target_canon)).strip
 
