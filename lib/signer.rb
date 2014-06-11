@@ -107,7 +107,7 @@ class Signer
   # </ds:KeyInfo>
   def x509_data_node
     issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
-    issuer_name_node.content = "C=RU, ST=Some-State, O=at-consulting/emailAddress=ekhatko@at-consulting.ru"
+    issuer_name_node.content = cert.subject.to_s.split("\/").delete_if{|e| e==""}.reverse.join(",")
 
     issuer_number_node = Nokogiri::XML::Node.new('X509SerialNumber', document)
     issuer_number_node.content = cert.serial
@@ -120,12 +120,10 @@ class Signer
     data_node.add_child(issuer_serial_node)
 
     security_token_reference_node = Nokogiri::XML::Node.new('o:SecurityTokenReference', document)
-    security_token_reference_node["u:Id"] = "STRId-#{rand 1000000}"
     security_token_reference_node.add_child(data_node)
 
 
     key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
-    key_info_node["Id"] = "KeyId-#{rand 100000000}"
     key_info_node.add_child(security_token_reference_node)
 
     signed_info_node.add_next_sibling(key_info_node)
@@ -148,19 +146,18 @@ class Signer
       wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
-    #what_to_sign = nil
-    #if options['only_sign_entire_headers_and_body']
-    #  # need to find entire header or body to sign
-    #  tmpnode = target_node
-    #  while tmpnode.name.downcase != 'header' and tmpnode.name.downcase != 'body'
-    #    tmpnode = tmpnode.parent
-    #  end
-    #  what_to_sign = tmpnode
-    #else
-    #  what_to_sign = target_node
-    #end
-
-    target_canon = canonicalize(target_node)
+    what_to_digest = nil
+    if options[:only_sign_entire_headers_and_body]
+      # need to find entire header or body to digest
+      tmpnode = target_node
+      while tmpnode.name.downcase != 'header' and tmpnode.name.downcase != 'body'
+        tmpnode = tmpnode.parent
+      end
+      what_to_digest = tmpnode
+    else
+      what_to_digest = target_node
+    end
+    target_canon = canonicalize(what_to_digest)
     target_digest = Base64.encode64(OpenSSL::Digest::SHA1.digest(target_canon)).strip
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
